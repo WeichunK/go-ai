@@ -57,16 +57,16 @@ class MCTSNode {
         return childNode;
     }
 
-    // 模擬對局（隨機走子直到結束）
+    // 模擬對局（加權隨機走子）
     simulate() {
         const simulationBoard = this.board.clone();
         let currentColor = this.color;
         let passCount = 0;
         let moveCount = 0;
-        const maxMoves = Math.min(50, this.board.size * this.board.size / 2); // 限制模擬長度
+        const maxMoves = Math.min(50, this.board.size * this.board.size / 2);
 
         while (passCount < 2 && moveCount < maxMoves) {
-            // 快速獲取空位置（不做完整合法性檢查）
+            // 快速獲取空位置
             const emptyPositions = [];
             for (let y = 0; y < simulationBoard.size; y++) {
                 for (let x = 0; x < simulationBoard.size; x++) {
@@ -80,9 +80,9 @@ class MCTSNode {
                 passCount++;
             } else {
                 passCount = 0;
-                // 隨機選擇一個空位置
-                const move = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
-                // 簡單嘗試落子，如果失敗就當作 pass
+                // 使用加權隨機選擇（更智能）
+                const move = this.selectWeightedMove(emptyPositions, simulationBoard, currentColor, moveCount);
+
                 const result = simulationBoard.makeMove(move.x, move.y, currentColor);
                 if (!result.success) {
                     passCount++;
@@ -93,9 +93,108 @@ class MCTSNode {
             moveCount++;
         }
 
-        // 計算最終分數
         const score = simulationBoard.calculateScore();
         return score.winner;
+    }
+
+    // 加權隨機選擇落子
+    selectWeightedMove(emptyPositions, board, color, moveCount) {
+        // 計算每個位置的權重
+        const weightedMoves = emptyPositions.map(pos => ({
+            pos,
+            weight: this.calculateMoveWeight(pos, board, color, moveCount)
+        }));
+
+        // 根據權重隨機選擇
+        const totalWeight = weightedMoves.reduce((sum, m) => sum + m.weight, 0);
+        let random = Math.random() * totalWeight;
+
+        for (const move of weightedMoves) {
+            random -= move.weight;
+            if (random <= 0) {
+                return move.pos;
+            }
+        }
+
+        // 備用：返回第一個
+        return weightedMoves[0].pos;
+    }
+
+    // 計算落子位置的權重
+    calculateMoveWeight(pos, board, color, moveCount) {
+        let weight = 1.0;
+
+        // 1. 星位加權（重要戰略點）
+        if (this.isStarPoint(pos.x, pos.y, board.size)) {
+            weight *= 2.5;
+        }
+
+        // 2. 連接性：靠近己方棋子
+        const nearbyAllies = this.countNearbyStones(pos, board, color, 2);
+        if (nearbyAllies > 0) {
+            weight *= (1 + nearbyAllies * 0.4);
+        }
+
+        // 3. 早期避免邊角過度擁擠
+        if (moveCount < 15) {
+            if (this.isEdgeOrCorner(pos, board.size)) {
+                // 除非是星位或小目
+                if (!this.isStarPoint(pos.x, pos.y, board.size)) {
+                    weight *= 0.6;
+                }
+            }
+        }
+
+        // 4. 中心區域（序盤較重要）
+        if (moveCount < 20) {
+            const centerBonus = this.getCenterBonus(pos, board.size);
+            weight *= (1 + centerBonus);
+        }
+
+        return weight;
+    }
+
+    // 判斷是否為星位
+    isStarPoint(x, y, size) {
+        const starPoints = {
+            19: [[3, 3], [3, 9], [3, 15], [9, 3], [9, 9], [9, 15], [15, 3], [15, 9], [15, 15]],
+            13: [[3, 3], [3, 9], [6, 6], [9, 3], [9, 9]],
+            9: [[2, 2], [2, 6], [4, 4], [6, 2], [6, 6]]
+        };
+
+        const points = starPoints[size] || [];
+        return points.some(([px, py]) => px === x && py === y);
+    }
+
+    // 計算附近己方棋子數
+    countNearbyStones(pos, board, color, radius) {
+        let count = 0;
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                const nx = pos.x + dx;
+                const ny = pos.y + dy;
+                if (nx >= 0 && nx < board.size && ny >= 0 && ny < board.size) {
+                    if (board.get(nx, ny) === color) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    // 判斷是否在邊角
+    isEdgeOrCorner(pos, size) {
+        return pos.x <= 2 || pos.x >= size - 3 || pos.y <= 2 || pos.y >= size - 3;
+    }
+
+    // 獲取中心獎勵
+    getCenterBonus(pos, size) {
+        const center = (size - 1) / 2;
+        const distToCenter = Math.abs(pos.x - center) + Math.abs(pos.y - center);
+        const maxDist = size - 1;
+        return (maxDist - distToCenter) / maxDist * 0.3; // 最多 30% 獎勵
     }
 
     // 回傳結果到祖先節點
