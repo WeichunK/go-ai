@@ -8,9 +8,9 @@ export class AIPlayer {
         this.color = color; // 1 (黑) 或 -1 (白)
         this.difficulty = difficulty;
         this.simulationsMap = {
-            easy: 300,      // 初級：300 次模擬
-            medium: 2000,   // 中級：2000 次模擬
-            hard: 5000      // 高級：5000 次模擬
+            easy: 50,       // 初級：50 次模擬 (~1秒)
+            medium: 500,    // 中級：500 次模擬 (~3-5秒)
+            hard: 1500      // 高級：1500 次模擬 (~8-12秒)
         };
     }
 
