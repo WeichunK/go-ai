@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="圍棋 AI 對弈 - 與 AI 下圍棋，支持多個難度級別">
+  <title>圍棋 AI 對弈</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎮 圍棋 AI 對弈</h1>
+      <p class="subtitle">與 AI 對弈，提升棋力</p>
+    </header>
+
+    <main>
+      <!-- 控制面板 -->
+      <div class="control-panel">
+        <div class="controls-row">
+          <button id="new-game-btn" class="btn btn-primary">開始新遊戲</button>
+          
+          <select id="difficulty-select" class="select">
+            <option value="easy">初級</option>
+            <option value="medium" selected>中級</option>
+            <option value="hard">高級</option>
+          </select>
+        </div>
+
+        <div class="controls-row">
+          <button id="undo-btn" class="btn" disabled>悔棋</button>
+          <button id="pass-btn" class="btn" disabled>Pass</button>
+          <button id="resign-btn" class="btn btn-danger" disabled>認輸</button>
+        </div>
+
+        <div class="controls-row">
+          <button id="stats-btn" class="btn btn-secondary">📊 統計</button>
+          <button id="export-btn" class="btn btn-secondary">💾 導出</button>
+          <button id="clear-history-btn" class="btn btn-secondary">🗑️ 清除</button>
+        </div>
+      </div>
+
+      <!-- 遊戲狀態 -->
+      <div class="game-info">
+        <div class="info-item">
+          <span class="label">狀態：</span>
+          <span id="game-status">準備開始</span>
+        </div>
+        <div class="info-item">
+          <span class="label">當前：</span>
+          <span id="current-player">-</span>
+        </div>
+        <div class="info-item">
+          <span class="label">手數：</span>
+          <span id="move-count">0</span>
+        </div>
+        <div class="info-item">
+          <span class="label">時長：</span>
+          <span id="game-duration">0:00</span>
+        </div>
+        <div class="info-item">
+          <span class="label">提子 ⚫：</span>
+          <span id="captured-black">0</span>
+        </div>
+        <div class="info-item">
+          <span class="label">提子 ⚪：</span>
+          <span id="captured-white">0</span>
+        </div>
+      </div>
+
+      <!-- 棋盤容器 -->
+      <div class="board-container">
+        <canvas id="game-board"></canvas>
+      </div>
+
+      <!-- AI 思考指示器 -->
+      <div id="ai-thinking" class="ai-thinking" style="display: none;">
+        <div class="spinner"></div>
+        <span>AI 思考中...</span>
+      </div>
+    </main>
+
+    <footer>
+      <p>💡 提示：點擊棋盤交叉點落子，黑棋先手</p>
+      <p class="version">v1.0 | 使用 MCTS 算法 | IndexedDB 存儲</p>
+    </footer>
+  </div>
+
+  <!-- 統計模態框 -->
+  <div id="stats-modal" class="modal">
+    <div class="modal-content">
+      <span id="close-stats-btn" class="close">&times;</span>
+      <div id="stats-content"></div>
+    </div>
+  </div>
+
+  <!-- 主應用腳本 -->
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
