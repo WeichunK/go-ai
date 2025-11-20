@@ -133,17 +133,17 @@ export class GoBoard {
             return { valid: false, reason: '位置超出棋盤範圍' };
         }
 
-        // 2. 位置必須為空
+        // 2. 位置必須為空（最快的檢查）
         if (this.get(x, y) !== 0) {
             return { valid: false, reason: '此位置已有棋子' };
         }
 
-        // 3. 檢查打劫規則
+        // 3. 檢查打劫規則（快速檢查）
         if (this.koPoint && this.koPoint.x === x && this.koPoint.y === y) {
             return { valid: false, reason: '打劫禁止立即提回' };
         }
 
-        // 4. 模擬落子，檢查是否自殺（落子後自己的棋子無氣）
+        // 4. 只有在通過上面所有檢查後，才進行昂貴的棋盤克隆和自殺手檢查
         const testBoard = this.clone();
         testBoard.set(x, y, color);
 

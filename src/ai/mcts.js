@@ -122,9 +122,12 @@ export class MCTS {
 
     // 執行 MCTS 搜索，返回最佳落子
     async search() {
+        console.log(`[MCTS] 開始搜索，總模擬次數: ${this.simulations}`);
+        const startTime = Date.now();
         const root = new MCTSNode(this.board, this.aiColor);
         const batchSize = 100; // 每批次執行的模擬次數
         const batches = Math.ceil(this.simulations / batchSize);
+        console.log(`[MCTS] 初始合法落子數: ${root.untriedMoves.length}`);
 
         for (let batch = 0; batch < batches; batch++) {
             const currentBatchSize = Math.min(batchSize, this.simulations - batch * batchSize);
@@ -160,13 +163,16 @@ export class MCTS {
 
         // 選擇訪問次數最多的子節點（最可靠的選擇）
         if (root.children.length === 0) {
-            return null; // 沒有合法落子
+            console.log('[MCTS] 沒有合法落子');
+            return null;
         }
 
         const bestChild = root.children.reduce((best, child) => {
             return child.visits > best.visits ? child : best;
         });
 
+        const elapsed = Date.now() - startTime;
+        console.log(`[MCTS] 搜索完成，耗時: ${elapsed}ms，最佳落子: (${bestChild.move.x}, ${bestChild.move.y})`);
         return bestChild.move;
     }
 
@@ -175,3 +181,4 @@ export class MCTS {
         this.simulations = count;
     }
 }
+```
