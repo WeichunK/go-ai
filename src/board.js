@@ -92,6 +92,25 @@ export class GoBoard {
         return liberties.size;
     }
 
+    // 獲取一組棋子的所有氣（坐標列表）
+    getLiberties(group) {
+        const liberties = new Set();
+        const result = [];
+
+        for (const { x, y } of group) {
+            for (const neighbor of this.getNeighbors(x, y)) {
+                if (this.get(neighbor.x, neighbor.y) === 0) {
+                    const key = `${neighbor.x},${neighbor.y}`;
+                    if (!liberties.has(key)) {
+                        liberties.add(key);
+                        result.push(neighbor);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
     // 移除被提的棋子組
     removeGroup(group) {
         for (const { x, y } of group) {
