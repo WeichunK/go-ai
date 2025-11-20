@@ -28,6 +28,7 @@ export class Game {
         this.board.reset();
         this.currentPlayer = 1; // 黑棋先手
         this.aiPlayer.setDifficulty(difficulty);
+        this.aiPlayer.resetMoveCount(); // 重置 AI 手數計數
         this.gameState = 'playing';
         this.passCount = 0;
         this.gameStartTime = Date.now();
