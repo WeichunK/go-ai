@@ -63,18 +63,30 @@ class MCTSNode {
         let currentColor = this.color;
         let passCount = 0;
         let moveCount = 0;
-        const maxMoves = this.board.size * this.board.size * 2; // 防止無限循環
+        const maxMoves = Math.min(50, this.board.size * this.board.size / 2); // 限制模擬長度
 
         while (passCount < 2 && moveCount < maxMoves) {
-            const validMoves = simulationBoard.getValidMoves(currentColor);
+            // 快速獲取空位置（不做完整合法性檢查）
+            const emptyPositions = [];
+            for (let y = 0; y < simulationBoard.size; y++) {
+                for (let x = 0; x < simulationBoard.size; x++) {
+                    if (simulationBoard.get(x, y) === 0) {
+                        emptyPositions.push({ x, y });
+                    }
+                }
+            }
 
-            if (validMoves.length === 0) {
+            if (emptyPositions.length === 0) {
                 passCount++;
             } else {
                 passCount = 0;
-                // 隨機選擇一個合法落子
-                const move = validMoves[Math.floor(Math.random() * validMoves.length)];
-                simulationBoard.makeMove(move.x, move.y, currentColor);
+                // 隨機選擇一個空位置
+                const move = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
+                // 簡單嘗試落子，如果失敗就當作 pass
+                const result = simulationBoard.makeMove(move.x, move.y, currentColor);
+                if (!result.success) {
+                    passCount++;
+                }
             }
 
             currentColor = -currentColor;
@@ -181,4 +193,3 @@ export class MCTS {
         this.simulations = count;
     }
 }
-```
