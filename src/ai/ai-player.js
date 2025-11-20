@@ -3,6 +3,7 @@
 
 import { MCTS } from './mcts.js';
 import { OpeningLibrary } from './opening-library.js';
+import { JosekiLibrary } from './joseki-library.js';
 
 export class AIPlayer {
     constructor(color, difficulty = 'medium') {
@@ -16,6 +17,9 @@ export class AIPlayer {
 
         // 開局庫（默認現代風格）
         this.openingLibrary = new OpeningLibrary('modern');
+        // 定式庫
+        this.josekiLibrary = new JosekiLibrary();
+
         this.moveCount = 0; // 追蹤手數
     }
 
@@ -40,7 +44,7 @@ export class AIPlayer {
     async getMove(board) {
         this.moveCount++;
 
-        // 前 8 手嘗試使用開局庫
+        // 1. 前 8 手嘗試使用開局庫
         if (this.openingLibrary.shouldUseOpening(this.moveCount)) {
             const openingMove = this.openingLibrary.getOpeningMove(
                 board,
@@ -49,13 +53,23 @@ export class AIPlayer {
             );
 
             if (openingMove) {
-                console.log(`[Opening] 使用開局庫 第${this.moveCount}手:`, openingMove);
+                console.log(`[Opening] 使用開局庫 第${this.moveCount} 手: `, openingMove);
                 return openingMove;
             }
         }
 
-        // 開局庫沒有合適落子，使用 MCTS
-        console.log(`[MCTS] 第${this.moveCount}手，使用 MCTS 計算`);
+        // 2. 嘗試匹配定式（中盤常用）
+        // 只有在中級和高級難度才啟用定式庫，或者是初級難度但權重較低
+        if (this.moveCount < 100) { // 定式主要在前半盤
+            const josekiMove = this.josekiLibrary.getJosekiMove(board, this.color);
+            if (josekiMove) {
+                console.log(`[Joseki] 匹配定式: ${josekiMove.name} - ${josekiMove.description} `);
+                return josekiMove;
+            }
+        }
+
+        // 3. 使用 MCTS 計算
+        console.log(`[MCTS] 第${this.moveCount} 手，使用 MCTS 計算`);
         const mcts = new MCTS(board, this.color, this.getSimulations());
         const move = await mcts.search();
         return move;
