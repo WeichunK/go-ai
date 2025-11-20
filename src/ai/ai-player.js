@@ -28,14 +28,10 @@ export class AIPlayer {
 
     // 使用 MCTS 選擇最佳落子
     async getMove(board) {
-        return new Promise((resolve) => {
-            // 在下一個事件循環中執行，避免阻塞 UI
-            setTimeout(() => {
-                const mcts = new MCTS(board, this.color, this.getSimulations());
-                const move = mcts.search();
-                resolve(move);
-            }, 0);
-        });
+        // MCTS 搜索現在是異步的
+        const mcts = new MCTS(board, this.color, this.getSimulations());
+        const move = await mcts.search();
+        return move;
     }
 
     // 在 Web Worker 中執行 MCTS（更好的性能）

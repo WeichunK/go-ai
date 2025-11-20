@@ -121,30 +121,41 @@ export class MCTS {
     }
 
     // 執行 MCTS 搜索，返回最佳落子
-    search() {
+    async search() {
         const root = new MCTSNode(this.board, this.aiColor);
+        const batchSize = 100; // 每批次執行的模擬次數
+        const batches = Math.ceil(this.simulations / batchSize);
 
-        for (let i = 0; i < this.simulations; i++) {
-            let node = root;
+        for (let batch = 0; batch < batches; batch++) {
+            const currentBatchSize = Math.min(batchSize, this.simulations - batch * batchSize);
 
-            // 1. Selection: 選擇最有前景的節點
-            while (!node.isLeaf() && node.isFullyExpanded()) {
-                node = node.selectChild();
-            }
+            for (let i = 0; i < currentBatchSize; i++) {
+                let node = root;
 
-            // 2. Expansion: 擴展一個新節點
-            if (!node.isFullyExpanded()) {
-                const expandedNode = node.expand();
-                if (expandedNode) {
-                    node = expandedNode;
+                // 1. Selection: 選擇最有前景的節點
+                while (!node.isLeaf() && node.isFullyExpanded()) {
+                    node = node.selectChild();
                 }
+
+                // 2. Expansion: 擴展一個新節點
+                if (!node.isFullyExpanded()) {
+                    const expandedNode = node.expand();
+                    if (expandedNode) {
+                        node = expandedNode;
+                    }
+                }
+
+                // 3. Simulation: 模擬對局
+                const result = node.simulate();
+
+                // 4. Backpropagation: 回傳結果
+                node.backpropagate(result, this.aiColor);
             }
 
-            // 3. Simulation: 模擬對局
-            const result = node.simulate();
-
-            // 4. Backpropagation: 回傳結果
-            node.backpropagate(result, this.aiColor);
+            // 每批次後給 UI 一個更新機會
+            if (batch < batches - 1) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
         }
 
         // 選擇訪問次數最多的子節點（最可靠的選擇）

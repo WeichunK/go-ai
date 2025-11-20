@@ -56,38 +56,50 @@ class GoApp {
             return; // AI 正在思考
         }
 
-        const result = await this.game.playerMove(x, y);
+        // 玩家落子
+        const result = this.game.board.makeMove(x, y, 1);
 
         if (result.success) {
-            // 更新渲染
+            this.game.moveCount++;
+            this.game.passCount = 0;
+            this.game.currentPlayer = -1;
+
+            // 更新顯示
             this.renderer.setLastMove(x, y);
             this.controls.updateDisplay();
 
-            // 顯示 AI 思考指示器
+            // AI 回合 - 顯示思考指示器
             this.showAIThinking();
 
-            // 等待 AI 回應（已在 playerMove 中處理）
-            // 等待一小段時間讓 AI 回應完成
-            setTimeout(() => {
-                this.hideAIThinking();
+            // 使用 setTimeout 讓 UI 有機會更新
+            setTimeout(async () => {
+                try {
+                    // AI 落子
+                    await this.game.aiMove();
 
-                // 獲取 AI 的最後一手
-                const lastMoveIdx = this.game.board.moveHistory.length - 1;
-                if (lastMoveIdx >= 0) {
-                    const lastMove = this.game.board.moveHistory[lastMoveIdx];
-                    this.renderer.setLastMove(lastMove.x, lastMove.y);
-                }
-
-                this.controls.updateDisplay();
-
-                // 檢查遊戲是否結束
-                if (this.game.gameState === 'finished') {
-                    const result = this.game.endGame();
-                    if (result) {
-                        this.controls.showGameResult(result);
+                    // 獲取 AI 的最後一手
+                    const lastMoveIdx = this.game.board.moveHistory.length - 1;
+                    if (lastMoveIdx >= 0) {
+                        const lastMove = this.game.board.moveHistory[lastMoveIdx];
+                        this.renderer.setLastMove(lastMove.x, lastMove.y);
                     }
+
+                    this.controls.updateDisplay();
+                    this.renderer.render();
+
+                    // 檢查遊戲是否結束
+                    if (this.game.gameState === 'finished') {
+                        const endResult = this.game.endGame();
+                        if (endResult) {
+                            this.controls.showGameResult(endResult);
+                        }
+                    }
+                } catch (error) {
+                    console.error('AI 移動錯誤:', error);
+                } finally {
+                    this.hideAIThinking();
                 }
-            }, 100);
+            }, 50);
         } else {
             // 顯示錯誤信息
             if (result.reason) {
